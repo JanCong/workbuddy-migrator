@@ -21,3 +21,16 @@ It is designed for local data owned by the user. It does not transfer cloud-side
 - SQLite writes run inside a transaction.
 - Secret-bearing connector data is skipped unless explicitly included.
 - Reports are written as JSON for auditability.
+
+## Quick Start
+
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/python -m pytest -q
+.venv/bin/python -m workbuddy_migrator.cli doctor --json
+.venv/bin/python -m workbuddy_migrator.cli inventory --json
+.venv/bin/python -m workbuddy_migrator.cli plan --source <old_uid> --target current --report plan.json
+```
+
+Run `backup`, `apply`, `verify`, and `rollback` only after reviewing the generated plan and backup manifest.
