@@ -64,7 +64,12 @@ def _emit(payload, as_json: bool, report: Path | None = None) -> None:
     if as_json:
         print_json(payload)
     else:
-        status = "ok" if getattr(payload, "ok", None) or (isinstance(payload, dict) and payload.get("ok", True)) else "failed"
+        if isinstance(payload, dict) and payload.get("ok") is False:
+            status = "failed"
+        elif getattr(payload, "ok", True) is False:
+            status = "failed"
+        else:
+            status = "ok"
         print(f"wbm {status}")
 
 

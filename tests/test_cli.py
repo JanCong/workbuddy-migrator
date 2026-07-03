@@ -22,6 +22,16 @@ def test_cli_inventory_json_report(workbuddy_home: Path, capsys) -> None:
     assert payload["accounts"]["old-user"]["session_count"] == 2
 
 
+def test_cli_inventory_report_human_status_is_ok(workbuddy_home: Path, tmp_path: Path, capsys) -> None:
+    create_db(workbuddy_home)
+    seed_account_data(workbuddy_home)
+    report_path = tmp_path / "inventory.json"
+    exit_code = main(["inventory", "--report", str(report_path)])
+    assert exit_code == 0
+    assert capsys.readouterr().out == "wbm ok\n"
+    assert report_path.exists()
+
+
 def test_cli_plan_writes_report(workbuddy_home: Path, tmp_path: Path) -> None:
     create_db(workbuddy_home)
     seed_account_data(workbuddy_home)
