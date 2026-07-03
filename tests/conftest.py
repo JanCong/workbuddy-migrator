@@ -73,6 +73,7 @@ def seed_account_data(root: Path, source: str = "old-user", target: str = "new-u
     (root / "memory" / f"{source}_memory.md").write_text("source memory\nshared line\n", encoding="utf-8")
     (root / "memory" / f"{target}_memory.md").write_text("target memory\nshared line\n", encoding="utf-8")
     (root / "memery" / f"{source}_memery.md").write_text("source memery\n", encoding="utf-8")
+    (root / "memery" / f"{target}_memery.md").write_text("target memery\n", encoding="utf-8")
     (root / "connectors" / source).mkdir()
     (root / "connectors" / target).mkdir()
     (root / "connectors" / source / "settings.json").write_text('{"a": 1, "shared": "source"}\n', encoding="utf-8")
