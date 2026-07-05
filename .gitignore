@@ -1,9 +1,24 @@
+# Python caches/build output
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.venv/
 .coverage
+htmlcov/
 build/
 dist/
 *.egg-info/
+
+# Local virtual environments
+.venv/
+venv/
+
+# Local secrets and machine-specific config
+.DS_Store
+.env
+.env.local
+.env.*.local
+*.log
+
+# Generated local reports and internal planning notes
 reports/
+docs/superpowers/

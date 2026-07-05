@@ -4,6 +4,11 @@ from .models import Inventory, MigrationPlan, Operation
 
 
 def _resolve_current_target(inventory: Inventory, source_user_id: str) -> str:
+    current_candidates = [
+        user_id for user_id, account in inventory.accounts.items() if user_id != source_user_id and account.is_current
+    ]
+    if len(current_candidates) == 1:
+        return current_candidates[0]
     candidates = [
         user_id
         for user_id, account in inventory.accounts.items()
@@ -95,7 +100,7 @@ def build_plan(
                 Operation(
                     kind="skip",
                     name="skip_secret_connector_files",
-                    description="Skip connector files with secret-bearing names unless include-secrets is enabled",
+                    description="Skip connector files with secret-bearing names by default",
                     source=f"connectors/{source_user_id}",
                     target=f"connectors/{target}",
                     secret=True,

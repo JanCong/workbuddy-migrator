@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
+import base64
 
 import pytest
 
@@ -78,4 +79,38 @@ def seed_account_data(root: Path, source: str = "old-user", target: str = "new-u
     (root / "connectors" / target).mkdir()
     (root / "connectors" / source / "settings.json").write_text('{"a": 1, "shared": "source"}\n', encoding="utf-8")
     (root / "connectors" / target / "settings.json").write_text('{"b": 2, "shared": "target"}\n', encoding="utf-8")
-    (root / "connectors" / source / "token.json").write_text('{"token": "secret-value"}\n', encoding="utf-8")
+    (root / "connectors" / source / "token.json").write_text('{"token": "dummy-value"}\n', encoding="utf-8")
+
+
+def jwt_for_payload(payload: dict[str, object]) -> str:
+    header = {"alg": "none", "typ": "JWT"}
+
+    def encode(value: dict[str, object]) -> str:
+        data = json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
+
+    return f"{encode(header)}.{encode(payload)}.signature"
+
+
+def seed_app_support_identity(app_support: Path, user_id: str, name: str) -> None:
+    storage = app_support / "User" / "globalStorage"
+    storage.mkdir(parents=True)
+    (storage / "storage.json").write_text(json.dumps({"genie.userId": user_id}) + "\n", encoding="utf-8")
+
+    token = jwt_for_payload(
+        {
+            "sub": user_id,
+            "name": name,
+            "nickname": "nick-" + user_id[:4],
+            "preferred_username": "preferred-" + user_id[:4],
+            "auth_time": 1775550089,
+            "iat": 1776309513,
+            "exp": 1807086089,
+        }
+    )
+    log_dir = app_support / "logs" / "20260416T091444"
+    log_dir.mkdir(parents=True)
+    (log_dir / "WorkBuddy.log").write_text(
+        f'2026-04-16 09:15:13.000 [error] request failed {{"Authorization":"Bearer {token}"}}\n',
+        encoding="utf-8",
+    )

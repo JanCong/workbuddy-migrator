@@ -9,7 +9,7 @@ description = "Dry-run-first local WorkBuddy account migration tool"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "WorkBuddy Migrator Contributors" }]
+authors = [{ name = "workbuddy-migrator contributors" }]
 dependencies = []
 
 [project.optional-dependencies]

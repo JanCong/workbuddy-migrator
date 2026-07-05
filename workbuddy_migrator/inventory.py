@@ -4,6 +4,7 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from .identity import current_user_id, jwt_log_identities
 from .models import AccountInventory, ConversationCoverage, Inventory, WorkBuddyPaths
 from .schema import connect_readonly, inspect_schema
 
@@ -57,7 +58,9 @@ def load_inventory(paths: WorkBuddyPaths) -> Inventory:
     finally:
         con.close()
 
-    user_ids = sorted(set(sessions_by_user) | set(automations_by_owner))
+    identities = jwt_log_identities(paths.app_support)
+    current = current_user_id(paths.app_support)
+    user_ids = sorted(set(sessions_by_user) | set(automations_by_owner) | ({current} if current else set()))
     accounts: dict[str, AccountInventory] = {}
     for user_id in user_ids:
         accounts[user_id] = AccountInventory(
@@ -67,6 +70,8 @@ def load_inventory(paths: WorkBuddyPaths) -> Inventory:
             memory_files=_list_names(paths.memory, f"{user_id}_memory.md"),
             memery_files=_list_names(paths.memery, f"{user_id}_memery.md"),
             connector_files=_connector_files(paths.connectors / user_id),
+            is_current=user_id == current,
+            identity=identities.get(user_id),
         )
 
     db_session_ids = sorted(row_id for ids in sessions_by_user.values() for row_id in ids)

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
-from conftest import create_db, seed_account_data
+from conftest import create_db, seed_account_data, seed_app_support_identity
 from workbuddy_migrator.inventory import load_inventory
 from workbuddy_migrator.paths import detect_paths
 
@@ -32,3 +33,20 @@ def test_inventory_reports_jsonl_coverage(workbuddy_home: Path) -> None:
     inventory = load_inventory(detect_paths())
     assert inventory.conversation_coverage.db_sessions_without_jsonl == ["session-2", "session-3"]
     assert inventory.conversation_coverage.jsonl_without_db_session == ["orphan-session"]
+
+
+def test_inventory_adds_identity_from_current_user_and_jwt_logs(workbuddy_home: Path, tmp_path: Path) -> None:
+    create_db(workbuddy_home)
+    seed_account_data(workbuddy_home)
+    app_support = tmp_path / "WorkBuddy"
+    seed_app_support_identity(app_support, "new-user", "Example User")
+
+    inventory = load_inventory(replace(detect_paths(), app_support=app_support))
+
+    target = inventory.accounts["new-user"]
+    assert target.is_current is True
+    assert target.identity is not None
+    assert target.identity.display_name == "Example User"
+    assert target.identity.auth_time == 1775550089
+    assert target.identity.source == "jwt_log"
+    assert inventory.accounts["old-user"].identity is None

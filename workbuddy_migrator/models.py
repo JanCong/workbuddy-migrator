@@ -33,6 +33,17 @@ class SchemaInfo:
 
 
 @dataclass(frozen=True)
+class AccountIdentity:
+    display_name: str | None = None
+    nickname: str | None = None
+    preferred_username: str | None = None
+    auth_time: int | None = None
+    issued_at: int | None = None
+    expires_at: int | None = None
+    source: str = "unresolved"
+
+
+@dataclass(frozen=True)
 class AccountInventory:
     user_id: str
     session_count: int = 0
@@ -40,6 +51,8 @@ class AccountInventory:
     memory_files: list[str] = field(default_factory=list)
     memery_files: list[str] = field(default_factory=list)
     connector_files: list[str] = field(default_factory=list)
+    is_current: bool = False
+    identity: AccountIdentity | None = None
 
 
 @dataclass(frozen=True)

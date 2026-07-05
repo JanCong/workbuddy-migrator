@@ -4,7 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from conftest import create_db, seed_account_data
+from conftest import create_db, seed_account_data, seed_app_support_identity
 from workbuddy_migrator.backup import create_backup
 from workbuddy_migrator.cli import main
 from workbuddy_migrator.inventory import load_inventory
@@ -60,3 +60,34 @@ def test_cli_rollback_restores_manifest(workbuddy_home: Path, capsys) -> None:
     finally:
         con.close()
     assert old_sessions == 2
+
+
+def test_cli_migrate_interactive_uses_numbered_accounts(
+    workbuddy_home: Path,
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    create_db(workbuddy_home)
+    seed_account_data(workbuddy_home)
+    app_support = tmp_path / "WorkBuddy"
+    seed_app_support_identity(app_support, "new-user", "Example User")
+    monkeypatch.setenv("WORKBUDDY_APP_SUPPORT", str(app_support))
+    replies = iter(["2", "1", "y"])
+    monkeypatch.setattr("builtins.input", lambda _prompt="": next(replies))
+
+    exit_code = main(["migrate"])
+
+    assert exit_code == 0
+    output = capsys.readouterr().out
+    assert "[1] new-...user  Example User" in output
+    assert "[2] old-...user  未找到姓名" in output
+    assert "确认迁移" in output
+    con = sqlite3.connect(workbuddy_home / "workbuddy.db")
+    try:
+        old_sessions = con.execute("SELECT COUNT(*) FROM sessions WHERE user_id = 'old-user'").fetchone()[0]
+        new_sessions = con.execute("SELECT COUNT(*) FROM sessions WHERE user_id = 'new-user'").fetchone()[0]
+    finally:
+        con.close()
+    assert old_sessions == 0
+    assert new_sessions == 3
